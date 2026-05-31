@@ -22,7 +22,6 @@ Thumbs.db
 
 data/*.xlsx
 data/*.parquet
-models/*.pkl
 models/*.joblib
 *.h5
 *.onnx
