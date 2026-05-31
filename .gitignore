@@ -21,7 +21,6 @@ env/
 Thumbs.db
 
 data/*.xlsx
-data/*.csv
 data/*.parquet
 models/*.pkl
 models/*.joblib
