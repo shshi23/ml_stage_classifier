@@ -1,8 +1,10 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 import plotly.express as px
-import plotly.graph_objects as go
+
+st.set_page_config(page_title="Определение клинической стадии", layout="centered", page_icon="🏥")
 
 st.markdown("""
 <style>
@@ -43,9 +45,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Конфигурация страницы
-st.set_page_config(page_title="Определение клинической стадии", layout="centered", page_icon="🏥")
-API_URL = "http://localhost:8000/predict"
+API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
 
 st.title("🏥 Определение клинической стадии заболевания")
 st.markdown("""
@@ -59,16 +59,15 @@ st.divider()
 
 with st.form("patient_input", clear_on_submit=True):
     
-    # === 1. Базовые параметры ===
     st.markdown("### 📋 Базовые параметры")
     st.markdown("<div style='margin: 25px 0'></div>", unsafe_allow_html=True)
     
     st.markdown("**Возраст (лет):**")
-    age = st.number_input("", min_value=0, max_value=100, value=None, step=1, 
+    age = st.number_input("Возраст (лет)", min_value=0, max_value=100, value=None, step=1, 
                           placeholder="Например: 7", label_visibility="collapsed", key="age_input")
     
     st.markdown("**Способность к ходьбе и бегу:**")
-    walk_ability = st.radio("", 
+    walk_ability = st.radio("Способность к ходьбе и бегу", 
         options=[
             "Бегает с отрывом двух ног от земли, присутствует фаза полета",
             "Бегает с отрывом двух ног от земли, но без фазы полета",
@@ -81,27 +80,26 @@ with st.form("patient_input", clear_on_submit=True):
     )
     
     st.markdown("**Баллы мускулатуры (верхние конечности):**")
-    muscle_upper = st.slider("", 0.0, 5.0, value=None, step=0.5, 
+    muscle_upper = st.slider("Баллы мускулатуры (верхние конечности)", 0.0, 5.0, value=None, step=0.5, 
                              label_visibility="collapsed", key="muscle_upper_slider")
     st.markdown("<div style='margin: 10px 0'></div>", unsafe_allow_html=True)
     
     st.markdown("**Баллы мускулатуры (нижние конечности):**")
-    muscle_lower = st.slider("", 0.0, 5.0, value=None, step=0.5, 
+    muscle_lower = st.slider("Баллы мускулатуры (нижние конечности)", 0.0, 5.0, value=None, step=0.5, 
                              label_visibility="collapsed", key="muscle_lower_slider")
     
     st.divider()
 
-    # === 2. Двигательные тесты ===
     st.markdown("### 🦵 Двигательные тесты")
     st.markdown("<div style='margin: 25px 0'></div>", unsafe_allow_html=True)
     
     st.markdown("**Использование перекатов при вставании:**")
-    gowers_roll = st.radio("",
+    gowers_roll = st.radio("Использование перекатов при вставании",
         options=["Подъем с пола без переката", "Подъем с пола с перекатом", "Подъем с пола с переворотом на живот"], 
         index=None, label_visibility="collapsed", key="gowers_roll_radio")
     
     st.markdown("**Использование опоры при вставании:**")
-    gowers_support = st.radio("",
+    gowers_support = st.radio("Использование опоры при вставании",
         options=[
             "Подъем с пола без опоры",
             "Подъем с пола с опорой на одну руку о пол или о бедро",
@@ -112,12 +110,12 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="gowers_support_radio")
     
     st.markdown("**Тест с шестиминутной ходьбой:**")
-    six_min_walk = st.radio("",
+    six_min_walk = st.radio("Тест с шестиминутной ходьбой",
         options=["> 500 м", "от 350 м до 500 м", "от 150 м до 350 м", "от 10 м до 150 м", "< 10 м"], 
         index=None, label_visibility="collapsed", key="six_min_walk_radio")
     
     st.markdown("**Приседания:**")
-    squats = st.radio("",
+    squats = st.radio("Приседания",
         options=[
             "Приседает без применения компенсирующих приемов",
             "Приседает с небольшими трудностями (компенсируются приемами Говерса, опирается одной рукой)",
@@ -128,7 +126,7 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="squats_radio")
     
     st.markdown("**Подпрыгивания (вверх на 2-х ногах):**")
-    jump_2leg = st.radio("",
+    jump_2leg = st.radio("Подпрыгивания (вверх на 2-х ногах)",
         options=[
             "Прыжок с отрывом двух ног от поверхности пола",
             "Потеря способности к прыжкам при сохранении вставания на носки",
@@ -138,7 +136,7 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="jump_2leg_radio")
     
     st.markdown("**Подпрыгивания (вверх на 1-ой ноге):**")
-    jump_1leg = st.radio("",
+    jump_1leg = st.radio("Подпрыгивания (вверх на 1-ой ноге)",
         options=[
             "Может подпрыгнуть на одной ноге",
             "Подъем на носок без отрыва от поверхности пола",
@@ -148,12 +146,11 @@ with st.form("patient_input", clear_on_submit=True):
 
     st.divider()
 
-    # === 3. Лестница и поза ===
     st.markdown("### 🪜 Лестница и особенности позы")
     st.markdown("<div style='margin: 25px 0'></div>", unsafe_allow_html=True)
     
     st.markdown("**Подъем по лестнице:**")
-    stair_up = st.radio("",
+    stair_up = st.radio("Подъем по лестнице",
         options=[
             "Подъем альтернативным шагом, не нуждаясь в опоре",
             "Подъем приставным шагом без опоры",
@@ -164,7 +161,7 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="stair_up_radio")
     
     st.markdown("**Функциональность верхних конечностей:**")
-    upper_func = st.radio("",
+    upper_func = st.radio("Функциональность верхних конечностей",
         options=[
             "Пациент может поднять руки выше уровня плеч",
             "Пациент может поднять руки не выше уровня плеч",
@@ -173,7 +170,7 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="upper_func_radio")
     
     st.markdown("**Спуск по лестнице:**")
-    stair_down = st.radio("",
+    stair_down = st.radio("Спуск по лестнице",
         options=[
             "Спуск альтернативным шагом, не нуждаясь в опоре",
             "Спуск приставным шагом без опоры",
@@ -184,7 +181,7 @@ with st.form("patient_input", clear_on_submit=True):
         index=None, label_visibility="collapsed", key="stair_down_radio")
     
     st.markdown("**Положение пациента:**")
-    position = st.radio("",
+    position = st.radio("Положение пациента",
         options=[
             "Пациент в позе \"сидя\" (коленные суставы под углом более 90 градусов)",
             "Сидячий пациент может быть поставлен на ноги с помощью опоры для стояния",
@@ -195,22 +192,21 @@ with st.form("patient_input", clear_on_submit=True):
 
     st.divider()
 
-    # === 4. Осанка и сколиоз ===
     st.markdown("### 🦴 Осанка и сколиоз")
     st.markdown("<div style='margin: 20px 0'></div>", unsafe_allow_html=True)
     
     st.markdown("**Гиперлордоз:**")
-    hyperlordosis = st.radio("",
+    hyperlordosis = st.radio("Гиперлордоз",
         options=["Небольшой гиперлордоз при вертикализации", "Умеренный гиперлордоз при вертикализации", "Выраженный гиперлордоз при вертикализации"], 
         index=None, label_visibility="collapsed", key="hyperlordosis_radio")
     
     st.markdown("**Стадия сколиоза:**")
-    scoliosis_stage = st.radio("", 
+    scoliosis_stage = st.radio("Стадия сколиоза", 
         options=["Формирующийся сколиоз", "Сколиотическая деформация"], 
         index=None, label_visibility="collapsed", key="scoliosis_stage_radio")
     
     st.markdown("**Спутники сколиоза:**")
-    scoliosis_comp = st.radio("", 
+    scoliosis_comp = st.radio("Спутники сколиоза", 
         options=["Деформация грудной клетки", "Деформация таза"], 
         index=None, label_visibility="collapsed", key="scoliosis_comp_radio")
  
@@ -225,7 +221,7 @@ with st.form("patient_input", clear_on_submit=True):
         "Тугоподвижность локтевых суставов", "Контрактуры локтевых суставов",
         "Контрактуры нижнечелюстно-височных суставов"
     ]
-    contractures = st.multiselect("", options=contracture_options, label_visibility="collapsed", 
+    contractures = st.multiselect("Тугоподвижность и контрактуры", options=contracture_options, label_visibility="collapsed", 
                                   placeholder="Выберите признаки", key="contractures_multiselect")
     
     st.markdown("**Кардиомиопатия:**")
@@ -235,14 +231,13 @@ with st.form("patient_input", clear_on_submit=True):
         "Снижение глобальной сократительной способности миокарда", "Снижение фракции выброса",
         "Отеки / Сердечная недостаточность"
     ]
-    cardiomyopathy = st.multiselect("", options=cardio_options, label_visibility="collapsed", 
+    cardiomyopathy = st.multiselect("Кардиомиопатия", options=cardio_options, label_visibility="collapsed", 
                                     placeholder="Выберите признаки", key="cardio_multiselect")
 
     st.divider()
 
     submitted = st.form_submit_button("🔍 Рассчитать стадию", type="primary", use_container_width=True)
 
-# === ЛОГИКА ПРЕДСКАЗАНИЯ ===
 if submitted:
     payload = {
         "Возраст": age,
@@ -272,11 +267,11 @@ if submitted:
             resp.raise_for_status()
             res = resp.json()
 
-            # 1. Основная стадия
+            # Основная стадия
             st.success(f"✅ Предсказанная стадия: **{res['stage']}** (уверенность: {res['confidence']:.1%})")
             st.progress(res['confidence'])
 
-            # 2. График вероятностей
+            # График вероятностей
             st.markdown("### 📊 Распределение вероятностей")
             proba_df = pd.DataFrame({
                 "Стадия": [str(k) for k in res["probabilities"].keys()],
@@ -285,20 +280,14 @@ if submitted:
             fig_proba = px.bar(proba_df, x="Стадия", y="Вероятность", 
                                color="Вероятность", color_continuous_scale="Blues", text_auto=".2%")
             fig_proba.update_layout(showlegend=False, yaxis_range=[0, 1], margin=dict(l=20, r=20, t=30, b=30))
-            st.plotly_chart(fig_proba, use_container_width=True)
+            st.plotly_chart(fig_proba, width='stretch')
 
-            # 3. SHAP-объяснение
+            # SHAP-объяснение
             if res.get("shap_explanation"):
                 st.markdown("### 🔍 Топ-3 признака, повлиявших на решение")
-                shap_df = pd.DataFrame(res["shap_explanation"])
-                fig_shap = go.Figure(go.Bar(
-                    x=shap_df["impact"], y=shap_df["feature"], orientation='h',
-                    marker_color=shap_df["impact"].apply(lambda x: '#2ca02c' if x > 0 else '#d62728'),
-                    text=shap_df["value"].apply(lambda x: f"Значение: {x}")
-                ))
-                fig_shap.update_layout(xaxis_title="Влияние на предсказание (SHAP value)", margin=dict(l=180, r=20, t=20, b=30))
-                st.plotly_chart(fig_shap, use_container_width=True)
+                for i, item in enumerate(res["shap_explanation"], 1):
+                    st.markdown(f"- **{item['feature']}** (влияние: `{item['impact']:.3f}`)")
                 
         except requests.exceptions.RequestException as e:
-            st.error(f"❌ Ошибка связи с сервером: {e}")
+            st.error(f"Ошибка связи с сервером: {e}")
             st.code("Проверьте, что FastAPI запущен: uvicorn api.main:app --reload")
