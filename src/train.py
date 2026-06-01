@@ -23,6 +23,10 @@ def main():
     df = pd.read_csv(DATA_PATH)
     X = df.drop(columns=['Стадия', 'id'], errors='ignore')
     y = (df['Стадия']).astype(int)
+
+    # Вычисляем и сохраняем медианы для импутации на инференсе
+    medians = X.median().to_dict()
+    joblib.dump(medians, os.path.join(MODEL_DIR, 'medians.pkl'))
     
     feature_names = X.columns.tolist()
 
