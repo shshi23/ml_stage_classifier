@@ -25,3 +25,4 @@ data/*.parquet
 models/*.joblib
 *.h5
 *.onnx
+*.png
