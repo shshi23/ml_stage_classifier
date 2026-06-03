@@ -26,3 +26,4 @@ models/*.joblib
 *.h5
 *.onnx
 *.png
+*.pdf
